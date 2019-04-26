@@ -4,6 +4,9 @@
 
 ;; Author: Tobias Zawada <naehring@smtp.1und1.de>
 ;; Keywords: outlines, files
+;; Version: 0
+;; URL: https://github.com/TobiasZawada/multfiles
+;; Package-Requires: ((emacs "25.1") (multfiles "0") (elgrep "1"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -34,33 +37,25 @@
 		(read-regexp "Regular expression for org-files:" "^20.*\.org$")))
   (require 'elgrep)
   (unless file-name-re (setq file-name-re "\\.org$"))
-  (loop for filematch in (elgrep dir file-name-re (concat "^\\*.*" re)
-				 :c-op (lambda (beg end)
-					(cons beg
-					      (save-excursion
-						(save-match-data
-						  (let (at-head)
-						    (while (and (setq at-head (re-search-forward "^* " nil 'noErr))
-								(org-in-block-p '("src"))))
-						    (if at-head (line-end-position 0)
-						      (point))
-						    )))))
-				 :abs t)
-	do
-	(with-current-buffer (find-file (car filematch))
-	  (loop for matchdata in (cdr filematch) do
-		(let* ((context (plist-get (car matchdata) :context))
-		       (b (car context))
-		       (e (cdr context)))
-		  (mf/mirror-region-in-multifile b e (concat "*mf:" re) "* [[file:" "]]"))))))
-
-
-(defun org-multifile-master (buffer-or-file-name)
-  ""
-  (let ((include-re "^[ \t]*#\\+INCLUDE:"))
-    
-    ))
-
+  (cl-loop for filematch in (elgrep dir file-name-re (concat "^\\*.*" re)
+				    :c-op (lambda (beg _end)
+					    (cons beg
+						  (save-excursion
+						    (save-match-data
+						      (let (at-head)
+							(while (and (setq at-head (re-search-forward "^* " nil 'noErr))
+								    (org-in-block-p '("src"))))
+							(if at-head (line-end-position 0)
+							  (point))
+							)))))
+				    :abs t)
+	   do
+	   (with-current-buffer (find-file (car filematch))
+	     (cl-loop for matchdata in (cdr filematch) do
+		      (let* ((context (plist-get (car matchdata) :context))
+			     (b (car context))
+			     (e (cdr context)))
+			(mf/mirror-region-in-multifile b e (concat "*mf:" re) "* [[file:" "]]"))))))
 
 (provide 'org-multifile)
 ;;; org-multifile.el ends here
