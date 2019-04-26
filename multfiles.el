@@ -4,6 +4,9 @@
 
 ;; Author: Magnar Sveen <magnars@gmail.com> modified by Tobias Zawada
 ;; Keywords: multiple files
+;; Version: 0
+;; URL: https://github.com/TobiasZawada/multfiles
+;; Package-Requires: ((emacs "25.1") (elgrep "1"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -37,7 +40,7 @@
 ;;; Code:
 
 (eval-when-compile
-  (require 'cl))
+  (require 'cl-lib))
 
 (defun mf/mirror-region-in-multifile (beg end &optional multifile-buffer head-beg head-end)
   "Add region from BEG to END to MULTIFILE-BUFFER defaulting to \"*multifile*\".
@@ -65,7 +68,7 @@ Decorate headings with HEAD-BEG and HEAD-END each defaulting to \"\"."
 (defun mf/save-original-buffers ()
   (interactive)
   (let (any-buffer-saved)
-    (loop for it in (mf--original-buffers) do
+    (cl-loop for it in (mf--original-buffers) do
 	  (if (buffer-live-p it)
 	      (with-current-buffer it
 		(when (and buffer-file-name (buffer-modified-p))
@@ -89,7 +92,7 @@ Decorate headings with HEAD-BEG and HEAD-END each defaulting to \"\"."
     (mapc (lambda (x) (add-to-list 'l x))
 	   (mapcar (lambda (it)
 		     (overlay-buffer (overlay-get it 'twin)))
-		   (loop for  ol in (overlays-in (point-min) (point-max))
+		   (cl-loop for  ol in (overlays-in (point-min) (point-max))
 			 if (equal 'mf-mirror (overlay-get ol 'type))
 			 collect ol)))
     l))
@@ -131,7 +134,7 @@ If HEAD-BEG and HEAD-END are given insert these ones before and after the head l
 ;;           (overlays-in (point-min) (point-max))))
 
 (defun mf--any-overlays-in-buffer ()
-  (loop for el in (mapcar (lambda (it) (memq (overlay-get it 'type) '(mf-original mf-mirror)))
+  (cl-loop for el in (mapcar (lambda (it) (memq (overlay-get it 'type) '(mf-original mf-mirror)))
 			  (overlays-in (point-min) (point-max)))
 	thereis el))
 
